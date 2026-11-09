@@ -1,4 +1,5 @@
--- My English Hub: run this file in Supabase SQL Editor.
+-- Legacy one-time schema source. The canonical CLI baseline is migrations/20261108210000_initial_schema.sql.
+-- New or existing projects should follow the Supabase CLI migration steps in README.md.
 create extension if not exists pgcrypto;
 create table if not exists public.profiles (
  id uuid primary key references auth.users(id) on delete cascade,

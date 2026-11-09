@@ -6,7 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:new": "supabase migration new",
+    "db:status": "supabase migration list",
+    "db:dry-run": "supabase db push --dry-run",
+    "db:push": "supabase db push"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",

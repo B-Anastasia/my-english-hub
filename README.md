@@ -5,16 +5,40 @@ A responsive English learning MVP built with Next.js, TypeScript, and Supabase. 
 ## Local setup
 
 1. Create a Supabase project.
-2. Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase SQL Editor, then run every SQL file in `supabase/migrations` in filename order. If the base schema is already installed, run only migrations that have not yet been applied; do not rerun the base schema on a live database.
-3. Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from the Supabase project API settings.
-4. Install dependencies and start the app:
+2. Install the Supabase CLI (`brew install supabase/tap/supabase@2` on macOS) and initialize the local project. The CLI is already initialized in this repository.
+3. For a new database, run the migrations with the CLI as described below. `supabase/schema.sql` is retained as a legacy baseline reference; don't run it in addition to the baseline migration.
+4. Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from the Supabase project API settings.
+5. Install dependencies and start the app:
 
    ```sh
    npm install
    npm run dev
    ```
 
-5. Open `http://localhost:3000` and create an account.
+6. Open `http://localhost:3000` and create an account.
+
+## Database migrations
+
+The Supabase CLI records applied migration versions remotely, so each migration is applied once. Authenticate and link this checkout to the project:
+
+```sh
+supabase login
+supabase link --project-ref YOUR_PROJECT_REF
+```
+
+The project ref is the subdomain in `NEXT_PUBLIC_SUPABASE_URL`. The CLI asks for the database password; enter it in the terminal and don't put it in `.env.local` or commit it.
+
+This project already has its initial schema installed manually. On the first CLI setup for that existing database, record the baseline migration as already applied, then preview and apply the pending quiz migration:
+
+```sh
+supabase migration repair --status applied 20261108210000
+npm run db:dry-run
+npm run db:push
+```
+
+Only do the baseline repair once, and only when the initial schema from this repository is already present in the linked database. For a brand-new empty project, skip `migration repair`; `db:push` applies the baseline and later migrations. Don't use `supabase db reset` on the linked production project.
+
+For future changes, create a migration with `npm run db:new -- descriptive_name`, put the SQL change in that new file, inspect the pending migration with `npm run db:dry-run`, and apply it with `npm run db:push`. `npm run db:status` shows which versions have been applied. For local development, `npm run db:start` and `npm run db:reset` use the local Supabase stack; `db:reset` requires Docker and rebuilds only the local database.
 
 The schema includes row-level security policies. Keep the Supabase service role key out of the browser and out of all `NEXT_PUBLIC_*` variables. Roles are managed by a trusted administrator; authenticated users can update their display name but cannot change their own role.
 
