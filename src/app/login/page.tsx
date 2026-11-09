@@ -1,3 +1,65 @@
 'use client';
-import {useState} from 'react'; import {useRouter} from 'next/navigation'; import {createClient} from '@/lib/supabase/client';
-export default function Login(){const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [msg,setMsg]=useState('');const router=useRouter();const supabase=createClient();async function submit(e:React.FormEvent){e.preventDefault();const {error}=await supabase.auth.signInWithPassword({email,password});if(error){setMsg(error.message);return}router.replace('/');router.refresh()}async function signup(){const {error}=await supabase.auth.signUp({email,password});setMsg(error?.message||'Check your email to confirm your account.')}return <section className="card form"><div className="eyebrow" style={{color:'#6659d6'}}>Welcome back</div><h1 style={{fontFamily:'Manrope'}}>Sign in to your hub</h1><p className="muted">Create an account or sign in to save your learning.</p><form onSubmit={submit}><label>Email</label><input className="field" type="email" required value={email} onChange={e=>setEmail(e.target.value)}/><label>Password</label><input className="field" type="password" required minLength={6} value={password} onChange={e=>setPassword(e.target.value)}/><button className="button" type="submit">Sign in</button> <button className="button secondary" type="button" onClick={signup}>Create account</button></form>{msg&&<p style={{marginTop:15}}>{msg}</p>}</section>}
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+
+export default function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [msg, setMsg] = useState('');
+  const router = useRouter();
+  const supabase = createClient();
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setMsg(error.message);
+      return;
+    }
+    router.replace('/');
+    router.refresh();
+  }
+
+  async function signup() {
+    const { error } = await supabase.auth.signUp({ email, password });
+    setMsg(error?.message || 'Check your email to confirm your account.');
+  }
+
+  return (
+    <section className="card form">
+      <div className="eyebrow" style={{ color: '#6659d6' }}>
+        Welcome back
+      </div>
+      <h1 style={{ fontFamily: 'Manrope' }}>Sign in to your hub</h1>
+      <p className="muted">Create an account or sign in to save your learning.</p>
+      <form onSubmit={submit}>
+        <label>Email</label>
+        <input
+          className="field"
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <label>Password</label>
+        <input
+          className="field"
+          type="password"
+          required
+          minLength={6}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button className="button" type="submit">
+          Sign in
+        </button>{' '}
+        <button className="button secondary" type="button" onClick={signup}>
+          Create account
+        </button>
+      </form>
+      {msg && <p style={{ marginTop: 15 }}>{msg}</p>}
+    </section>
+  );
+}
