@@ -17,6 +17,10 @@ A responsive English learning MVP built with Next.js, TypeScript, and Supabase. 
 
 6. Open `http://localhost:3000` and create an account.
 
+## Code formatting
+
+Run `npm run format` to format the app and SQL files, or `npm run format:check` to check them. The shared rules live in `.prettierrc.json`, `.sql-formatter.json`, and `.editorconfig`.
+
 ## Database migrations
 
 The Supabase CLI records applied migration versions remotely, so each migration is applied once. Authenticate and link this checkout to the project:

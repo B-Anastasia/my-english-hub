@@ -1,0 +1,7 @@
+node_modules/
+.next/
+coverage/
+out/
+build/
+supabase/migrations/
+supabase/schema.sql

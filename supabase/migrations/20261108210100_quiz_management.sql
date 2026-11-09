@@ -1,49 +1,164 @@
 -- Quiz authoring, answer privacy, and learner submissions.
-alter table public.quizzes add column if not exists topic text not null default 'General';
-alter table public.quizzes drop constraint if exists quizzes_level_check;
-alter table public.quizzes add constraint quizzes_level_check check (level in ('A1','A2','B1','B2','C1','C2')) not valid;
+alter table public.quizzes
+add column if not exists topic text not null default 'General';
+
+
+alter table public.quizzes
+drop constraint if exists quizzes_level_check;
+
+
+alter table public.quizzes
+add constraint quizzes_level_check check (level in ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')) not valid;
+
+
 alter table public.quizzes validate constraint quizzes_level_check;
 
+
 create table if not exists public.question_answer_keys (
-  question_id uuid primary key references public.questions(id) on delete cascade,
+  question_id uuid primary key references public.questions (id) on delete cascade,
   correct_answer text,
   explanation_ru text,
   sample_answer text
 );
 
-insert into public.question_answer_keys(question_id,correct_answer,explanation_ru,sample_answer)
-select id,correct_answer,explanation_ru,sample_answer from public.questions
-on conflict (question_id) do update set
-  correct_answer=excluded.correct_answer,
-  explanation_ru=excluded.explanation_ru,
-  sample_answer=excluded.sample_answer;
 
-alter table public.questions drop column if exists correct_answer;
-alter table public.questions drop column if exists explanation_ru;
-alter table public.questions drop column if exists sample_answer;
+insert into
+  public.question_answer_keys (
+    question_id,
+    correct_answer,
+    explanation_ru,
+    sample_answer
+  )
+select
+  id,
+  correct_answer,
+  explanation_ru,
+  sample_answer
+from
+  public.questions
+on conflict (question_id) do update
+set
+  correct_answer = excluded.correct_answer,
+  explanation_ru = excluded.explanation_ru,
+  sample_answer = excluded.sample_answer;
+
+
+alter table public.questions
+drop column if exists correct_answer;
+
+
+alter table public.questions
+drop column if exists explanation_ru;
+
+
+alter table public.questions
+drop column if exists sample_answer;
+
 
 alter table public.question_answer_keys enable row level security;
+
+
 drop policy if exists "answer keys owner manage" on public.question_answer_keys;
-create policy "answer keys owner manage" on public.question_answer_keys for all
-  using (exists(select 1 from public.questions q join public.quizzes z on z.id=q.quiz_id where q.id=question_id and z.owner_id=auth.uid()))
-  with check (exists(select 1 from public.questions q join public.quizzes z on z.id=q.quiz_id where q.id=question_id and z.owner_id=auth.uid()));
-revoke all on public.question_answer_keys from anon, authenticated;
-grant select, insert, update, delete on public.question_answer_keys to authenticated;
+
+
+create policy "answer keys owner manage" on public.question_answer_keys for all using (
+  exists (
+    select
+      1
+    from
+      public.questions q
+      join public.quizzes z on z.id = q.quiz_id
+    where
+      q.id = question_id
+      and z.owner_id = auth.uid ()
+  )
+)
+with
+  check (
+    exists (
+      select
+        1
+      from
+        public.questions q
+        join public.quizzes z on z.id = q.quiz_id
+      where
+        q.id = question_id
+        and z.owner_id = auth.uid ()
+    )
+  );
+
+
+revoke all on public.question_answer_keys
+from
+  anon,
+  authenticated;
+
+
+grant
+select
+,
+  insert,
+update,
+delete on public.question_answer_keys to authenticated;
+
 
 -- Attempts can be read by their owner but can only be written through the validated RPC.
 drop policy if exists "attempts own only" on public.attempts;
+
+
 drop policy if exists "attempts read own" on public.attempts;
-create policy "attempts read own" on public.attempts for select using (auth.uid()=user_id);
-revoke insert, update, delete on public.attempts from anon, authenticated;
-grant select on public.attempts to authenticated;
+
+
+create policy "attempts read own" on public.attempts for
+select
+  using (auth.uid () = user_id);
+
+
+revoke insert,
+update,
+delete on public.attempts
+from
+  anon,
+  authenticated;
+
+
+grant
+select
+  on public.attempts to authenticated;
+
 
 drop policy if exists "answers own attempt" on public.user_answers;
-create policy "answers read own attempt" on public.user_answers for select
-  using (exists(select 1 from public.attempts a where a.id=attempt_id and a.user_id=auth.uid()));
-revoke insert, update, delete on public.user_answers from anon, authenticated;
-grant select on public.user_answers to authenticated;
 
-create or replace function public.save_quiz(
+
+create policy "answers read own attempt" on public.user_answers for
+select
+  using (
+    exists (
+      select
+        1
+      from
+        public.attempts a
+      where
+        a.id = attempt_id
+        and a.user_id = auth.uid ()
+    )
+  );
+
+
+revoke insert,
+update,
+delete on public.user_answers
+from
+  anon,
+  authenticated;
+
+
+grant
+select
+  on public.user_answers to authenticated;
+
+
+create or replace function public.save_quiz (
   p_quiz_id uuid,
   p_title text,
   p_description text,
@@ -51,8 +166,10 @@ create or replace function public.save_quiz(
   p_topic text,
   p_is_public boolean,
   p_questions jsonb
-) returns uuid
-language plpgsql security definer set search_path=public,pg_temp as $$
+) returns uuid language plpgsql security definer
+set
+  search_path = public,
+  pg_temp as $$
 declare
   v_user_id uuid := auth.uid();
   v_quiz_id uuid;
@@ -100,8 +217,11 @@ begin
 end;
 $$;
 
-create or replace function public.submit_quiz_attempt(p_quiz_id uuid,p_answers jsonb)
-returns jsonb language plpgsql security definer set search_path=public,pg_temp as $$
+
+create or replace function public.submit_quiz_attempt (p_quiz_id uuid, p_answers jsonb) returns jsonb language plpgsql security definer
+set
+  search_path = public,
+  pg_temp as $$
 declare
   v_user_id uuid := auth.uid();
   v_question record;
@@ -151,7 +271,22 @@ begin
 end;
 $$;
 
-revoke all on function public.save_quiz(uuid,text,text,text,text,boolean,jsonb) from public,anon;
-revoke all on function public.submit_quiz_attempt(uuid,jsonb) from public,anon;
-grant execute on function public.save_quiz(uuid,text,text,text,text,boolean,jsonb) to authenticated;
-grant execute on function public.submit_quiz_attempt(uuid,jsonb) to authenticated;
+
+revoke all on function public.save_quiz (uuid, text, text, text, text, boolean, jsonb)
+from
+  public,
+  anon;
+
+
+revoke all on function public.submit_quiz_attempt (uuid, jsonb)
+from
+  public,
+  anon;
+
+
+grant
+execute on function public.save_quiz (uuid, text, text, text, text, boolean, jsonb) to authenticated;
+
+
+grant
+execute on function public.submit_quiz_attempt (uuid, jsonb) to authenticated;

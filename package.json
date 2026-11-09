@@ -13,7 +13,10 @@
     "db:new": "supabase migration new",
     "db:status": "supabase migration list",
     "db:dry-run": "supabase db push --dry-run",
-    "db:push": "supabase db push"
+    "db:push": "supabase db push",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css}\" \"*.json\" \"*.md\" && npm run format:sql",
+    "format:sql": "find supabase -type f -name '*.sql' -print0 | xargs -0 -n 1 sql-formatter --language postgresql --fix",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,css}\" \"*.json\" \"*.md\" && node scripts/check-sql-format.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
@@ -26,6 +29,8 @@
     "@types/node": "^22.13.4",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
+    "prettier": "^3.9.10",
+    "sql-formatter": "^15.9.0",
     "typescript": "^5.7.3"
   }
 }
